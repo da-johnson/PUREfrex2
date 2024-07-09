@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reaction Worksheet</title>
+    <script>
+        function createReactions() {
+            const numReactions = document.getElementById("numReactions").value;
+            const finalVolume = document.getElementById("finalVolume").value;
+            const numUnlistedItems = document.getElementById("numUnlistedItems").value;
+            const reactionsDiv = document.getElementById("reactions");
+            reactionsDiv.innerHTML = '';
+
+            for (let i = 1; i <= numReactions; i++) {
+                let unlistedItemsHTML = '';
+                for (let j = 1; j <= numUnlistedItems; j++) {
+                    unlistedItemsHTML += `
+                        <h4>Unlisted Item ${j}</h4>
+                        <label for="unlistedName${i}_${j}">Name:</label>
+                        <input type="text" id="unlistedName${i}_${j}" name="unlistedName${i}_${j}" required><br>
+                        <label for="unlistedStock${i}_${j}">Stock Concentration (arbitrary unit):</label>
+                        <input type="number" id="unlistedStock${i}_${j}" name="unlistedStock${i}_${j}" step="0.01" required><br>
+                        <label for="unlistedFinal${i}_${j}">Final Concentration (arbitrary unit):</label>
+                        <input type="number" id="unlistedFinal${i}_${j}" name="unlistedFinal${i}_${j}" step="0.01" required><br>
+                    `;
+                }
+
+                const reactionDiv = document.createElement("div");
+                reactionDiv.innerHTML = `
+                    <h3>Reaction ${i}</h3>
+                    <label for="reactionname${i}">Reaction Construct:</label>
+                    <input type="text" id="reactionname${i}" name="reactionname${i}" required><br>
+                    <label for="templateDNAStock${i}">Template DNA Stock Concentration (nM):</label>
+                    <input type="number" id="templateDNAStock${i}" name="templateDNAStock${i}" step="0.01" required><br>
+                    <label for="finalDNAConcentration${i}">Final DNA Concentration (nM):</label>
+                    <input type="number" id="finalDNAConcentration${i}" name="finalDNAConcentration${i}" step="0.01" required><br>
+                    ${unlistedItemsHTML}
+                `;
+                reactionsDiv.appendChild(reactionDiv);
+            }
+        }
+
+        function generateRecipes() {
+            const numReactions = document.getElementById("numReactions").value;
+            const finalVolume = document.getElementById("finalVolume").value;
+            const numUnlistedItems = document.getElementById("numUnlistedItems").value;
+            let recipes = '';
+
+            for (let i = 1; i <= numReactions; i++) {
+                const reactionName = document.getElementById(`reactionname${i}`).value;
+                const templateDNAStock = document.getElementById(`templateDNAStock${i}`).value;
+                const finalDNAConcentration = document.getElementById(`finalDNAConcentration${i}`).value;
+                const solution1 = finalVolume * 0.5;
+                const solution2 = finalVolume * 0.05;
+                const solution3 = finalVolume * 0.1;
+                const templateDNA = (finalDNAConcentration * finalVolume) / templateDNAStock;
+                let water = finalVolume - (solution1 + solution2 + solution3 + templateDNA);
+
+                let unlistedItemsHTML = '';
+                for (let j = 1; j <= numUnlistedItems; j++) {
+                    const unlistedName = document.getElementById(`unlistedName${i}_${j}`).value;
+                    const unlistedStock = document.getElementById(`unlistedStock${i}_${j}`).value;
+                    const unlistedFinal = document.getElementById(`unlistedFinal${i}_${j}`).value;
+                    const unlistedVolume = (unlistedFinal * finalVolume) / unlistedStock;
+                    water -= unlistedVolume;
+
+                    unlistedItemsHTML += `
+                        <p>${unlistedName}: ${unlistedVolume.toFixed(2)} µL</p>
+                    `;
+                }
+
+                recipes += `
+                    <h3>Recipe for Reaction ${i}: ${reactionName}</h3>
+                    <p>Solution I: ${solution1.toFixed(2)} µL</p>
+                    <p>Solution II: ${solution2.toFixed(2)} µL</p>
+                    <p>Solution III: ${solution3.toFixed(2)} µL</p>
+                    <p>Template DNA: ${templateDNA.toFixed(2)} µL</p>
+                    ${unlistedItemsHTML}
+                    <p>Water: ${water.toFixed(2)} µL</p>
+                    <p>Total Volume: ${finalVolume} µL</p>
+                `;
+            }
+
+            document.getElementById("recipeOutput").innerHTML = recipes;
+        }
+    </script>
+</head>
+<body>
+    <h1>Reaction Worksheet</h1>
+    <form>
+        <label for="numReactions">Number of Unique Reactions:</label>
+        <input type="number" id="numReactions" name="numReactions" min="1" required><br>
+        <label for="finalVolume">Final Volume per Reaction (µL):</label>
+        <input type="number" id="finalVolume" name="finalVolume" min="1" required><br>
+        <label for="numUnlistedItems">Number of Additional Unlisted Items:</label>
+        <input type="number" id="numUnlistedItems" name="numUnlistedItems" min="0" required><br>
+        <button type="button" onclick="createReactions()">Create Reactions</button>
+    </form>
+    <div id="reactions"></div>
+    <button type="button" onclick="generateRecipes()">Generate Recipes</button>
+    <div id="recipeOutput"></div>
+</body>
+</html>
